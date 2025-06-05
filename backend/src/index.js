@@ -28,6 +28,9 @@ wss.on('connection', (ws) => {
         console.log('Peer registered:', peerId);
         break;
 
+      case 'request':
+      case 'accept':
+      case 'decline':
       case 'offer':
       case 'answer':
       case 'ice-candidate':

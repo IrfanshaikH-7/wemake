@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import './App.css'
+import { toast } from 'sonner'
 
 function App() {
   const [myId, setMyId] = useState('')
@@ -10,6 +11,7 @@ function App() {
   const peerConnectionRef = useRef()
   const videoRef = useRef()
   const streamRef = useRef()
+  const peerIdRef = useRef('')
 
   useEffect(() => {
     // Generate a unique ID for this peer
@@ -30,7 +32,7 @@ function App() {
 
     ws.onmessage = async (event) => {
       const message = JSON.parse(event.data)
-
+      console.log(message, "message")
       switch (message.type) {
         case 'offer':
           await handleOffer(message.sender, message.data)
@@ -40,6 +42,39 @@ function App() {
           break
         case 'ice-candidate':
           await handleIceCandidate(message.data)
+          break
+        case 'request':
+          console.log('Got request from:', message.sender)
+          toast.info(`${message.sender} wants to connect`, {
+            action: {
+              label: 'accept',
+              onClick: () => {
+                console.log('Sending accept to:', message.sender)
+                wsRef.current.send(JSON.stringify({
+                  type: 'accept',
+                  target: message.sender
+                }))
+              }
+            },
+            cancel: {
+              label: 'decline',
+              onClick: () => {
+                console.log('Sending decline to:', message.sender)
+                wsRef.current.send(JSON.stringify({
+                  type: 'decline',
+                  target: message.sender
+                }))
+              }
+            }
+          })
+          break
+        case 'accept':
+          console.log('Got accept from:', message.sender)
+          console.log('Current peerId:', peerIdRef.current)
+          connectToPeer()
+          break
+        case 'decline':
+          console.log('Got decline from:', message.sender)
           break
       }
     }
@@ -73,7 +108,7 @@ function App() {
       if (event.candidate) {
         wsRef.current.send(JSON.stringify({
           type: 'ice-candidate',
-          target: peerId,
+          target: peerIdRef.current,
           data: event.candidate
         }))
       }
@@ -97,7 +132,7 @@ function App() {
 
   const handleOffer = async (sender, offer) => {
     const pc = createPeerConnection()
-    
+
     try {
       // Get available sources using the exposed API
       const sources = await window.electronAPI.getSources()
@@ -135,7 +170,7 @@ function App() {
       })
 
       await pc.setRemoteDescription(new RTCSessionDescription(offer))
-      
+
       // Add any pending ICE candidates
       if (pc.pendingCandidates) {
         for (const candidate of pc.pendingCandidates) {
@@ -157,10 +192,20 @@ function App() {
     }
   }
 
+
+  const handleConnectClick = () => {
+    console.log('Sending request to:', peerIdRef.current)
+    wsRef.current.send(JSON.stringify({
+      type: 'request',
+      target: peerIdRef.current,
+      data: { type: 'request' } 
+    }))
+  }
+
   const handleAnswer = async (answer) => {
     try {
       await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(answer))
-      
+
       // Add any pending ICE candidates
       if (peerConnectionRef.current.pendingCandidates) {
         for (const candidate of peerConnectionRef.current.pendingCandidates) {
@@ -190,9 +235,11 @@ function App() {
   }
 
   const connectToPeer = async () => {
+
+  console.log("connectToPeer", peerId, "connect")
     try {
       const pc = createPeerConnection()
-      
+
       // Create an offer to receive video
       const offer = await pc.createOffer({
         offerToReceiveVideo: true
@@ -201,7 +248,7 @@ function App() {
 
       wsRef.current.send(JSON.stringify({
         type: 'offer',
-        target: peerId,
+        target: peerIdRef.current,
         data: offer
       }))
 
@@ -220,10 +267,13 @@ function App() {
           <input
             type="text"
             value={peerId}
-            onChange={(e) => setPeerId(e.target.value)}
+            onChange={(e) => {
+              setPeerId(e.target.value)
+              peerIdRef.current = e.target.value
+            }}
             placeholder="Enter peer ID to connect"
           />
-          <button onClick={connectToPeer} disabled={!peerId || isConnected}>
+          <button onClick={handleConnectClick} disabled={!peerIdRef.current || isConnected}>
             Connect
           </button>
         </div>
