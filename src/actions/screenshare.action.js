@@ -224,6 +224,11 @@ export const handleWebSocketMessage = async (event, wsRef) => {
   const store = useScreenshareStore.getState()
   const message = JSON.parse(event.data)
   console.log('WebSocket message received:', message)
+  console.log('Current user state:', {
+    myId: store.myId,
+    isViewer: store.isViewer,
+    isConnected: store.isConnected
+  })
   
   switch (message.type) {
     case 'offer':
@@ -272,6 +277,54 @@ export const handleWebSocketMessage = async (event, wsRef) => {
       break
     case 'decline':
       console.log('Got decline from:', message.sender)
+      break
+    case 'control-request':
+      console.log('Got control request from:', message.sender)
+      console.log('Is viewer?', store.isViewer)
+      console.log('Message target:', message.target)
+      console.log('My ID:', store.myId)
+      console.log('Message details:', message)
+      
+      // Check if this message is meant for us
+      if (message.target === store.myId && !store.isViewer) {
+        console.log('Showing control request dialog')
+        toast.info(`${message.sender} wants to control your screen`, {
+          action: {
+            label: 'allow',
+            onClick: () => {
+              console.log('Sending control approved to:', message.sender)
+              wsRef.current.send(JSON.stringify({
+                type: 'control-approved',
+                target: message.sender
+              }))
+            }
+          },
+          cancel: {
+            label: 'deny',
+            onClick: () => {
+              console.log('Sending control denied to:', message.sender)
+              wsRef.current.send(JSON.stringify({
+                type: 'control-denied',
+                target: message.sender
+              }))
+            }
+          }
+        })
+      } else {
+        console.log('Ignoring control request - not the target or is viewer')
+        console.log('Reason:', {
+          isTarget: message.target === store.myId,
+          isViewer: store.isViewer
+        })
+      }
+      break
+    case 'control-approved':
+      console.log('Control request approved by:', message.sender)
+      toast.success('Control request approved!')
+      break
+    case 'control-denied':
+      console.log('Control request denied by:', message.sender)
+      toast.error('Control request denied')
       break
   }
 }

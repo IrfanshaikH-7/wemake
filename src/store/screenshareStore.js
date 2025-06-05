@@ -5,6 +5,7 @@ const useScreenshareStore = create((set, get) => ({
   myId: '',
   peerId: '',
   isConnected: false,
+  isViewer: false,  // true if we're viewing someone else's screen
   peerConnection: null,
   stream: null,
   videoRef: null,
@@ -13,6 +14,7 @@ const useScreenshareStore = create((set, get) => ({
   setMyId: (id) => set({ myId: id }),
   setPeerId: (id) => set({ peerId: id }),
   setIsConnected: (status) => set({ isConnected: status }),
+  setIsViewer: (status) => set({ isViewer: status }),
   setPeerConnection: (pc) => set({ peerConnection: pc }),
   setStream: (stream) => set({ stream }),
   setVideoRef: (ref) => {
