@@ -97,7 +97,6 @@ function App() {
           ref={videoRef}
           autoPlay
           playsInline
-          style={{ width: '100%', height: '100vh' }}
         />
         {isConnected && isViewer && (
           <button
