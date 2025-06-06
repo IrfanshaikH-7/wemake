@@ -321,10 +321,12 @@ export const handleWebSocketMessage = async (event, wsRef) => {
     case 'control-approved':
       console.log('Control request approved by:', message.sender)
       toast.success('Control request approved!')
+      store.setIsControlling(true)
       break
     case 'control-denied':
       console.log('Control request denied by:', message.sender)
       toast.error('Control request denied')
+      store.setIsControlling(false)
       break
   }
 }

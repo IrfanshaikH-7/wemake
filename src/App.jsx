@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 import './App.css'
 import { handleWebSocketMessage } from './actions/screenshare.action'
 import useScreenshareStore from './store/screenshareStore'
+import ControlHandler from './components/ControlHandler'
 
 function App() {
   const wsRef = useRef()
@@ -117,6 +118,7 @@ function App() {
             Request Control
           </button>
         )}
+        <ControlHandler />
       </div>
     </div>
   )

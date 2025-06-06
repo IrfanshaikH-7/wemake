@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@electron/remote": "^2.0.12",
+    "@nut-tree-fork/nut-js": "^4.2.6",
     "electron": "^29.1.0",
     "electron-builder": "^24.9.1",
     "peerjs": "^1.5.4",

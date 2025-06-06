@@ -6,6 +6,7 @@ const useScreenshareStore = create((set, get) => ({
   peerId: '',
   isConnected: false,
   isViewer: false,  // true if we're viewing someone else's screen
+  isControlling: false, // true if we have control of the other person's screen
   peerConnection: null,
   stream: null,
   videoRef: null,
@@ -15,6 +16,10 @@ const useScreenshareStore = create((set, get) => ({
   setPeerId: (id) => set({ peerId: id }),
   setIsConnected: (status) => set({ isConnected: status }),
   setIsViewer: (status) => set({ isViewer: status }),
+  setIsControlling: (status) => {
+    console.log('Setting isControlling to:', status)
+    set({ isControlling: status })
+  },
   setPeerConnection: (pc) => set({ peerConnection: pc }),
   setStream: (stream) => set({ stream }),
   setVideoRef: (ref) => {
@@ -51,6 +56,7 @@ const useScreenshareStore = create((set, get) => ({
     if (stream) {
       stream.getTracks().forEach(track => track.stop())
     }
+    set({ isControlling: false }) // Reset control state on cleanup
   }
 }))
 
