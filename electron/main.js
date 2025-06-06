@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, desktopCapturer } = require('electron');
+const { app, BrowserWindow, ipcMain, desktopCapturer, Menu } = require('electron');
 const path = require('path');
 const { mouse, keyboard } = require('@nut-tree-fork/nut-js');
 const isDev = process.env.NODE_ENV === 'development';
@@ -8,16 +8,42 @@ mouse.config.autoDelayMs = 0;
 mouse.config.mouseSpeed = 1000;
 
 let mainWindow;
+let isResizing = false;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
-    height: 800,
+    height: 675, // 16:9 ratio for 1200 width
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js')
     }
+  });
+
+  // Remove menu bar
+  Menu.setApplicationMenu(null);
+
+  // Handle window resize to maintain 16:9.5 ratio
+  mainWindow.on('resize', () => {
+    if (isResizing) return;
+    isResizing = true;
+
+    const [width, height] = mainWindow.getSize();
+    const aspectRatio = 16/9.7;
+    
+    // If width changed, adjust height
+    if (width !== mainWindow.getSize()[0]) {
+      mainWindow.setSize(width, Math.round(width / aspectRatio));
+    }
+    // If height changed, adjust width
+    else {
+      mainWindow.setSize(Math.round(height * aspectRatio), height);
+    }
+
+    setTimeout(() => {
+      isResizing = false;
+    }, 100);
   });
 
   // Set CSP
