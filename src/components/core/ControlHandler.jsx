@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import useScreenshareStore from '../store/screenshareStore';
+import useScreenshareStore from '../../store/screenshareStore';
 
 const ControlHandler = () => {
   const { isControlling, videoRef } = useScreenshareStore();
